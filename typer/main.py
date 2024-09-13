@@ -692,7 +692,7 @@ def get_callback(
         if param.name:
             use_params[param.name] = param.default
 
-    def wrapper(**kwargs: Any) -> Any:
+    def foo(**kwargs: Any):
         _rich_traceback_guard = pretty_exceptions_short  # noqa: F841
         for k, v in kwargs.items():
             if k in use_convertors:
@@ -701,8 +701,19 @@ def get_callback(
                 use_params[k] = v
         if context_param_name:
             use_params[context_param_name] = click.get_current_context()
+        return use_params
+
+    def wrapper(**kwargs: Any) -> Any:
+        use_params = foo(**kwargs)
         return callback(**use_params)
 
+    async def awrapper(**kwargs: Any) -> Any:
+        use_params = foo(**kwargs)
+        return await callback(**use_params)
+
+    if inspect.iscoroutinefunction(callback):
+        update_wrapper(awrapper, callback)
+        return awrapper
     update_wrapper(wrapper, callback)
     return wrapper
 

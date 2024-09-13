@@ -195,6 +195,10 @@ def _main(
         try:
             with self.make_context(prog_name, args, **extra) as ctx:
                 rv = self.invoke(ctx)
+                if inspect.isawaitable(rv):
+                    import asyncio
+
+                    rv = asyncio.get_event_loop().run_until_complete(rv)
                 if not standalone_mode:
                     return rv
                 # it's not safe to `ctx.exit(rv)` here!
